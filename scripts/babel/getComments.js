@@ -7,14 +7,15 @@
 
 'use strict';
 
-function getComments(path) {
+function getUseStrictComments(path) {
   const allComments = path.hub.file.ast.comments;
   if (path.node.leadingComments) {
     // Babel AST includes comments.
-    return path.node.leadingComments;
+    const useStrictComments = path.node.leadingComments.filter(comment => comment.value.includes('use strict'));
+    return useStrictComments;
   }
   // In Hermes AST we need to find the comments by range.
-  const comments = [];
+  const useStrictComments = [];
   let line = path.node.loc.start.line;
   let i = allComments.length - 1;
   while (i >= 0 && allComments[i].loc.end.line >= line) {
@@ -22,10 +23,13 @@ function getComments(path) {
   }
   while (i >= 0 && allComments[i].loc.end.line === line - 1) {
     line = allComments[i].loc.start.line;
-    comments.unshift(allComments[i]);
+    if (allComments[i].value.includes('use strict')) {
+      useStrictComments.unshift(allComments[i]);
+    }
     i--;
   }
-  return comments;
+  return useStrictComments;
 }
 
-module.exports = getComments;
+module.exports = getUseStrictComments;
+
